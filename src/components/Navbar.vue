@@ -1,3 +1,4 @@
+
 <template>
   <nav
     :class="[
@@ -13,10 +14,9 @@
 
         <!-- LOGO -->
         <div class="flex items-center gap-3">
-
           <img
             :src="Avatar"
-            alt="avatar"
+            alt="Avatar de Michaël"
             class="w-10 h-10 rounded-full object-cover border border-gray-200"
           />
 
@@ -26,21 +26,24 @@
           >
             Michaël
           </button>
-
         </div>
 
         <!-- DESKTOP NAV -->
         <div class="hidden md:flex items-center gap-8">
-
           <button
             v-for="link in navLinks"
             :key="link.id"
             @click="scrollToSection(link.id)"
-            class="relative text-sm font-medium transition group"
+            class="relative flex items-center gap-2 text-sm font-medium transition group"
             :class="activeSection === link.id
               ? 'text-primary'
               : 'text-gray-600 hover:text-primary'"
           >
+            <component
+              :is="link.icon"
+              :size="17"
+              :stroke-width="1.8"
+            />
 
             {{ link.label }}
 
@@ -48,27 +51,19 @@
             <span
               v-if="activeSection === link.id"
               class="absolute -bottom-2 left-0 right-0 h-0.5 bg-primary rounded-full"
-            ></span>
-
+            />
           </button>
-
         </div>
 
         <!-- MOBILE BUTTON -->
         <button
           @click="isMobileMenuOpen = !isMobileMenuOpen"
           class="md:hidden p-2 rounded-xl hover:bg-gray-100 transition"
+          :aria-label="isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'"
+          :aria-expanded="isMobileMenuOpen"
         >
-          <svg v-if="isMobileMenuOpen" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-
-          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
+          <X v-if="isMobileMenuOpen" :size="22" />
+          <Menu v-else :size="22" />
         </button>
 
       </div>
@@ -77,25 +72,34 @@
       <transition name="fade">
         <div
           v-if="isMobileMenuOpen"
-          class="md:hidden mt-4 bg-white/90 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg p-4"
+          class="md:hidden mt-4 bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg p-4"
         >
-
-          <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-2">
 
             <button
               v-for="link in navLinks"
               :key="link.id"
               @click="scrollToSection(link.id)"
-              class="text-left px-3 py-2 rounded-xl transition"
+              class="flex items-center gap-3 text-left px-3 py-3 rounded-xl transition"
               :class="activeSection === link.id
-                ? 'bg-primary/10 text-primary font-medium'
+                ? 'bg-primary/10 text-primary font-semibold'
                 : 'text-gray-600 hover:bg-gray-100'"
             >
-              {{ link.label }}
+              <component
+                :is="link.icon"
+                :size="19"
+                :stroke-width="1.8"
+              />
+
+              <span>{{ link.label }}</span>
+
+              <span
+                v-if="activeSection === link.id"
+                class="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+              />
             </button>
 
           </div>
-
         </div>
       </transition>
 
@@ -105,53 +109,76 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import Avatar from '../assets/Img/profile.png'
+import Avatar from '../assets/Img/profile.png';
 
+import {
+  House,
+  Code2,
+  BriefcaseBusiness,
+  FolderKanban,
+  GraduationCap,
+  Mail,
+  Menu,
+  X,
+} from 'lucide-vue-next';
+
+// STATES
 const isScrolled = ref(false);
 const isMobileMenuOpen = ref(false);
 const activeSection = ref('hero');
 
+// NAVIGATION LINKS
 const navLinks = [
-  { label: 'Accueil', id: 'hero' },
-  // { label: 'À propos', id: 'about' },
-  { label: 'Compétences', id: 'skills' },
-  { label: 'Expériences', id: 'experience' },
-  { label: 'Projets', id: 'projects' },
-  { label: 'Éducation', id: 'education' },
-  { label: 'Contact', id: 'contact' },
+  { label: 'Accueil', id: 'hero', icon: House },
+  { label: 'Compétences', id: 'skills', icon: Code2 },
+  { label: 'Expériences', id: 'experience', icon: BriefcaseBusiness },
+  { label: 'Projets', id: 'projects', icon: FolderKanban },
+  { label: 'Éducation', id: 'education', icon: GraduationCap },
+  { label: 'Contact', id: 'contact', icon: Mail },
 ];
 
+// SCROLL TO SECTION
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
+
   if (element) {
-    element.scrollIntoView({ behavior: 'smooth' });
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
     isMobileMenuOpen.value = false;
   }
 };
 
+// HANDLE SCROLL
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 10;
 
-  // Détecter la section active
-  const sections = ['hero', 'about', 'skills', 'experience', 'projects', 'education', 'contact'];
-  const scrollPosition = window.scrollY + 100;
+  const scrollPosition = window.scrollY + 120;
 
-  for (const sectionId of sections) {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const offsetTop = element.offsetTop;
-      const offsetBottom = offsetTop + element.offsetHeight;
+  for (const link of navLinks) {
+    const element = document.getElementById(link.id);
 
-      if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
-        activeSection.value = sectionId;
-        break;
-      }
+    if (!element) continue;
+
+    const offsetTop = element.offsetTop;
+    const offsetBottom = offsetTop + element.offsetHeight;
+
+    if (
+      scrollPosition >= offsetTop &&
+      scrollPosition < offsetBottom
+    ) {
+      activeSection.value = link.id;
+      break;
     }
   }
 };
 
+// LIFECYCLE
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
+  handleScroll();
+  window.addEventListener('scroll', handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
@@ -162,11 +189,12 @@ onUnmounted(() => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(-8px);
 }
 </style>
